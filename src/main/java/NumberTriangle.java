@@ -1,4 +1,8 @@
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.lang.Integer.*;
 
 /**
  * This is the provided NumberTriangle class to be used in this coding task.
@@ -135,8 +139,10 @@ public class NumberTriangle {
         // open the file and get a BufferedReader object whose methods
         // are more convenient to work with when reading the file contents.
         InputStream inputStream = NumberTriangle.class.getClassLoader().getResourceAsStream(fname);
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream != null ? inputStream : null));
 
+        List<NumberTriangle> prevRow = new ArrayList<>();
+        List<NumberTriangle> currRow = new ArrayList<>();
 
         // TODO define any variables that you want to use to store things
 
@@ -146,18 +152,43 @@ public class NumberTriangle {
 
         String line = br.readLine();
         while (line != null) {
-
-            // remove when done; this line is included so running starter code prints the contents of the file
-            System.out.println(line);
+            String[] currentLine = line.split(" ");
+            // now you have a fixed length list of type string, containing in numbers for each row
+            //alt: use "\\s" for \s means a space, \\s escapes java rules
 
             // TODO process the line
-
-            //read the next line
+            if (prevRow.isEmpty()) {
+                top = new NumberTriangle(parseInt(currentLine[0]));  // converts first item in row into int
+                prevRow.add(top);
+                currRow.add(top);
+            } else { // prevRow is NOT empty -  we are not on the first line
+                NumberTriangle first = new NumberTriangle(parseInt(currentLine[0]));
+                // create a new number trianlge with empty l&r, root = first int in the line
+                prevRow.get(0).left = first;  //assign this new tree first row's first int's left branch
+                currRow.add(first);  // now the row above is linked this tree and this tree is also in its own row
+                for (int i = 1; i < currentLine.length - 1; i++) {  // increments from second item (i=1) to last item
+                    NumberTriangle rn = new NumberTriangle(parseInt(currentLine[i]));
+                    prevRow.get(i - 1).right = rn;  // every item in curr row is linked to two items above
+                    prevRow.get(i).left = rn; // same^^
+                    currRow.add(rn);  // for tracking purposes
+                }
+                // at this point, all FRONT and MIDDLE items in curr row has been added.
+                // the last item is only connected to one above.
+                // after we finish attaching the last item to the above row's last item's right,
+                // we iterate to the next row
+                NumberTriangle last = new NumberTriangle(parseInt(currentLine[currentLine.length - 1]));
+                 // grab the last item index, slice from current, parse it,
+                prevRow.get(prevRow.size() - 1).right = last;
+                currRow.add(last);
+                // now we are done, iterate to the next row
+            }
+            prevRow = currRow;
+            currRow = new ArrayList<>();
             line = br.readLine();
         }
-        br.close();
-        return top;
-    }
+        br.close();  // here, line is empty, end of file
+        return top;  // from the above loop, top is never updated ever since the first iteration of the loop (so top = very top int)
+        }
 
     public static void main(String[] args) throws IOException {
 
@@ -168,5 +199,6 @@ public class NumberTriangle {
         // Problem 18 from project Euler [not for credit]
         mt.maxSumPath();
         System.out.println(mt.getRoot());
+
     }
 }
